@@ -1,8 +1,10 @@
 package com.example.ProjectMobileCalcMent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +26,24 @@ public class HomeScreen extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        Button playButton = findViewById(R.id.button_play);
+        Button scoreButton = findViewById(R.id.button_score);
+        Button quitButton = findViewById(R.id.button_quit);
+
+        playButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GameActivity.class);
+            startActivity(intent);
+        });
+
+        scoreButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ScoreActivity.class);
+            startActivity(intent);
+        });
+
+        quitButton.setOnClickListener(v -> {
+            finishAffinity();
+        });
     }
 
     @Override
@@ -42,10 +62,12 @@ public class HomeScreen extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.menu_about) {
-            // Handle the about action
+            Intent intent = new Intent(this, AboutActivity.class);
+            startActivity(intent);
             return true;
         } else if (id == R.id.menu_settings) {
-            // Handle the settings action
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
