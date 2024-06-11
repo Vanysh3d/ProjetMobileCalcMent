@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">ProjetMobileCalcMent</string>
+    <string name="app_name">Akinatir</string>
+    <string name="play_button">Jouer</string>
+    <string name="score_button">Score</string>
+    <string name="about_button">À propos</string>
+    <string name="exit_button">Quitter</string>
 </resources>

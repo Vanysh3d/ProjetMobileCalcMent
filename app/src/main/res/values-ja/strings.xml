@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Akinatir</string>
+    <string name="play_button">プレー</string>
+    <string name="score_button">得点</string>
+    <string name="about_button">ところで</string>
+    <string name="exit_button">去る</string>
+</resources>
