@@ -7,4 +7,18 @@
     android:layout_height="match_parent"
     tools:context="com.example.ProjectMobileCalcMent.ScoreActivity">
 
+    <!-- activity_score.xml -->
+    <ListView
+        android:id="@+id/scoreListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/placeholderTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

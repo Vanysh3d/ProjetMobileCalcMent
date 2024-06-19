@@ -13,6 +13,13 @@
         android:theme="@style/Theme.ProjetMobileCalcMent"
         tools:targetApi="31">
         <activity
+            android:name="com.example.ProjectMobileCalcMent.RegistrationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ProjetMobileCalcMent" />
+        <activity
+            android:name=".RegistrationActivity"
+            android:exported="false" />
+        <activity
             android:name="com.example.ProjectMobileCalcMent.ScoreActivity"
             android:exported="false" />
         <activity
