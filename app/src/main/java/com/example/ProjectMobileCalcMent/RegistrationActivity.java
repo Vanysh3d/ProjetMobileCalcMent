@@ -1,5 +1,6 @@
 package com.example.ProjectMobileCalcMent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,6 +42,8 @@ public class RegistrationActivity extends AppCompatActivity {
             scoreEntity.setUsername(username);
             scoreEntity.setScore(score);
             scoreDao.create(scoreEntity);
+            Intent intent = new Intent(RegistrationActivity.this, HomeScreen.class);
+            startActivity(intent);
         });
     }
 }

@@ -53,6 +53,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="68dp"
         android:hint="@string/answerEditText_hint"
+        android:importantForAutofill="no"
         android:inputType="number"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"

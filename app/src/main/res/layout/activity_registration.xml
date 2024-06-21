@@ -8,7 +8,7 @@
     tools:context="com.example.ProjectMobileCalcMent.RegistrationActivity">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="256dp"
         android:orientation="vertical"
@@ -18,15 +18,18 @@
 
         <EditText
             android:id="@+id/usernameEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter your username" />
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:autofillHints="username"
+            android:hint="@string/usernameEditText_hint"
+            android:importantForAutofill="yes"
+            android:inputType="text" />
 
         <Button
             android:id="@+id/registerButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Register" />
+            android:text="@string/register_button" />
 
     </LinearLayout>
 

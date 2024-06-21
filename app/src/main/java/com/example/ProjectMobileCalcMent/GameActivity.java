@@ -1,6 +1,8 @@
 package com.example.ProjectMobileCalcMent;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -14,8 +16,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.projetmobilecalcment.R;
 import java.util.Random;
+import java.util.Stack;
 
 public class GameActivity extends AppCompatActivity {
+
+    MediaPlayer mediaPlayer;
 
     private TextView scoreTextView;
     private TextView livesTextView;
@@ -27,6 +32,16 @@ public class GameActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        mediaPlayer = MediaPlayer.create(this, R.raw.puzzles);
+        mediaPlayer.setLooping(true);
+
+        SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
+        boolean isMusicEnabled = sharedPreferences.getBoolean("MusicEnabled", true);
+        if (isMusicEnabled) {
+            mediaPlayer.start();
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
@@ -36,13 +51,13 @@ public class GameActivity extends AppCompatActivity {
         answerEditText = findViewById(R.id.answerEditText);
 
         // Generate a calculation and display it in calculationTextView
-        String calculation = generateCalculation();
-        calculationTextView.setText(calculation);
+        final String[] calculation =new String[] { generateCalculation() };
+        calculationTextView.setText(calculation[0]);
 
         // Check the user's answer. If it's correct, increase the score. If it's wrong, decrease the lives.
         answerEditText.setOnEditorActionListener((v, actionId, event) -> {
             String userAnswer = answerEditText.getText().toString();
-            if (isAnswerCorrect(calculation, userAnswer)) {
+            if (isAnswerCorrect(calculation[0], userAnswer)) {
                 score++;
                 updateScore();
             } else {
@@ -50,13 +65,37 @@ public class GameActivity extends AppCompatActivity {
                 updateLives();
                 if (lives == 0) {
                     // If the user has no more lives, open the registration activity and pass the score via Intent
-                    Intent intent = new Intent(GameActivity.this, ScoreActivity.class);
+                    Intent intent = new Intent(GameActivity.this, RegistrationActivity.class);
                     intent.putExtra("score", score);
                     startActivity(intent);
                 }
             }
+            // Generate a new calculation and display it
+            calculation[0] = generateCalculation();
+            calculationTextView.setText(calculation[0]);
+
+            // Clear the answer field
+            answerEditText.setText("");
             return true;
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mediaPlayer != null) {
+            mediaPlayer.pause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
+        boolean isMusicEnabled = sharedPreferences.getBoolean("MusicEnabled", true);
+        if (isMusicEnabled) {
+            mediaPlayer.start();
+        }
     }
 
     private void updateScore() {
@@ -69,55 +108,85 @@ public class GameActivity extends AppCompatActivity {
 
     private String generateCalculation() {
         Random random = new Random();
-        String[] operations = {"+", "-", "*", "/"};
+        String[] operations = {"+", "-", "*"};
 
-        int numberOfNumbers = random.nextInt(11);
-        StringBuilder calculation = new StringBuilder();
+        int numberOfNumbers = random.nextInt(4) + 1;
+        StringBuilder calculationBuilder = new StringBuilder();
 
         for (int i = 0; i < numberOfNumbers; i++) {
-            int number = random.nextInt(101);
+            int number1 = random.nextInt(51);
+            int number2 = random.nextInt(51);
             String operation = operations[random.nextInt(operations.length)];
 
-            calculation.append(number).append(" ").append(operation).append(" ");
+            if ("-".equals(operation)) {
+                // Ensure the subtraction result is always positive
+                if (number2 > number1) {
+                    int temp = number1;
+                    number1 = number2;
+                    number2 = temp;
+                }
+                calculationBuilder.append(number1).append(" ").append(operation).append(" ").append(number2);
+            } else {
+                calculationBuilder.append(number1).append(" ").append(operation).append(" ");
+            }
         }
 
         // Add the last number
-        calculation.append(random.nextInt(101));
+        calculationBuilder.append(random.nextInt(51));
 
-        return calculation.toString();
+        return calculationBuilder.toString();
     }
 
-    private boolean isAnswerCorrect(String calculation, String userAnswer) {
+    private double calculateResult(String calculation) {
         String[] parts = calculation.split(" ");
-        double result = Double.parseDouble(parts[0]);
+        Stack<Double> numbers = new Stack<>();
+        Stack<String> operations = new Stack<>();
 
-        for (int i = 1; i < parts.length; i += 2) {
-            String operation = parts[i];
-            double number = Double.parseDouble(parts[i + 1]);
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+
+            if ("+".equals(part) || "-".equals(part) || "*".equals(part)) {
+                while (!operations.isEmpty() && "*".equals(operations.peek())) {
+                    double right = numbers.pop();
+                    double left = numbers.pop();
+                    numbers.push(left * right);
+                    operations.pop();
+                }
+                operations.push(part);
+            } else {
+                numbers.push(Double.parseDouble(part));
+            }
+        }
+
+        while (!operations.isEmpty()) {
+            double right = numbers.pop();
+            double left = numbers.pop();
+            String operation = operations.pop();
 
             switch (operation) {
                 case "+":
-                    result += number;
+                    numbers.push(left + right);
                     break;
                 case "-":
-                    result -= number;
+                    numbers.push(left - right);
                     break;
                 case "*":
-                    result *= number;
-                    break;
-                case "/":
-                    if (number != 0) {
-                        result /= number;
-                    } else {
-                        return false;
-                    }
+                    numbers.push(left * right);
                     break;
             }
         }
 
-        double userResult = Double.parseDouble(userAnswer);
+        return numbers.pop();
+    }
 
-        // Compare the results with a small tolerance to account for floating point errors
-        return Math.abs(result - userResult) < 0.0001;
+    private boolean isAnswerCorrect(String calculation, String userAnswer) {
+        if(userAnswer.isEmpty()) {
+            return false;
+        }
+        double result = calculateResult(calculation);
+        double userResult = Double.parseDouble(userAnswer);
+        double tolerance = 0.0001;
+
+        return Math.abs(result - userResult) < tolerance;
     }
 }

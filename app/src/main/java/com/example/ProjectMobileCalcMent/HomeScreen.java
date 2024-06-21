@@ -1,8 +1,12 @@
 package com.example.ProjectMobileCalcMent;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
@@ -37,9 +41,6 @@ import com.example.projetmobilecalcment.R;
 import java.util.Locale;
 
 public class HomeScreen extends AppCompatActivity {
-        MediaPlayer mediaPlayer;
-
-        private AppBarConfiguration appBarConfiguration;
 
         private boolean isLanguageChanged = false;
 
@@ -49,17 +50,12 @@ public class HomeScreen extends AppCompatActivity {
             loadLocale();
             setContentView(R.layout.activity_home_screen);
 
-            mediaPlayer = MediaPlayer.create(this, R.raw.Puzzles);
-            mediaPlayer.setLooping(true);
-
-            SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
-            boolean isMusicEnabled = sharedPreferences.getBoolean("MusicEnabled", true);
-            if (isMusicEnabled) {
-                mediaPlayer.start();
-            }
+            Intent intentService = new Intent(this, MusicService.class);
+            startService(intentService);
 
             Button buttonPlay = findViewById(R.id.button_play);
             buttonPlay.setOnClickListener(v -> {
+                stopService(intentService);
                 Intent intent = new Intent(HomeScreen.this, GameActivity.class);
                 startActivity(intent);
             });
@@ -99,7 +95,8 @@ public class HomeScreen extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.menu_settings) {
-                showSettingsPopup();
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
                 return true;
             }
 
@@ -110,52 +107,6 @@ public class HomeScreen extends AppCompatActivity {
             }
 
             return super.onOptionsItemSelected(item);
-        }
-
-        private void showSettingsPopup() {
-            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-            View popupView = inflater.inflate(R.layout.popup_settings, null);
-
-            int width = LinearLayout.LayoutParams.MATCH_PARENT;
-            int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-            boolean focusable = true;
-            PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
-
-            // MUSIC
-            SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
-            boolean isMusicEnabled = sharedPreferences.getBoolean("MusicEnabled", true);
-            SwitchCompat switchMusic = popupView.findViewById(R.id.switch_music);
-            switchMusic.setChecked(isMusicEnabled);
-            switchMusic.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                SharedPreferences.Editor editor = getSharedPreferences("Settings", MODE_PRIVATE).edit();
-                editor.putBoolean("MusicEnabled", isChecked);
-                editor.apply();
-                if (isChecked) {
-                    mediaPlayer.start();
-                } else {
-                    mediaPlayer.pause();
-                }
-            });
-
-            // Afficher le PopupWindow sous la barre d'outils
-            popupWindow.showAtLocation(findViewById(R.id.toolbar), Gravity.TOP | Gravity.START, 0, (getSupportActionBar().getHeight()) + 100);
-            popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-                @Override
-                public void onDismiss() {
-                    if (isLanguageChanged) {
-                        recreate();
-                        isLanguageChanged = false;
-                    }
-                    SharedPreferences sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE);
-                    boolean isMusicEnabled = sharedPreferences.getBoolean("MusicEnabled", true);
-                    if (isMusicEnabled) {
-                        mediaPlayer.start();
-                    } else {
-                        mediaPlayer.pause();
-                    }
-                }
-            });
-
         }
 
         public void setLocale(String lang) {
@@ -181,11 +132,45 @@ public class HomeScreen extends AppCompatActivity {
         }
 
         @Override
+        protected void onStop() {
+            super.onStop();
+            if (isFinishing()){
+                Intent intent = new Intent(this, MusicService.class);
+                stopService(intent);
+            }
+        }
+
+        private BroadcastReceiver screenOffReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                    Intent intentService = new Intent(context, MusicService.class);
+                    stopService(intentService);
+                }
+            }
+        };
+
+        @Override
+        protected void onResume(){
+            super.onResume();
+            if (!MusicService.isRunning) {
+                Intent intentService = new Intent(this, MusicService.class);
+                startService(intentService);
+            }
+            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+            registerReceiver(screenOffReceiver, filter);
+        }
+
+        @Override
+        protected void onPause() {
+            super.onPause();
+            unregisterReceiver(screenOffReceiver);
+        }
+
+        @Override
         protected void onDestroy() {
             super.onDestroy();
-            if(mediaPlayer != null){
-                mediaPlayer.release();
-                mediaPlayer = null;
-            }
+            Intent intent = new Intent(this, MusicService.class);
+            stopService(intent);
         }
     }
