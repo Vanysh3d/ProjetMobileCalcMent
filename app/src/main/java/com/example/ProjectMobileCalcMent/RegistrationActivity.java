@@ -44,6 +44,7 @@ public class RegistrationActivity extends AppCompatActivity {
             scoreDao.create(scoreEntity);
             Intent intent = new Intent(RegistrationActivity.this, HomeScreen.class);
             startActivity(intent);
+            finish();
         });
     }
 }

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -21,6 +22,8 @@ import java.util.Stack;
 public class GameActivity extends AppCompatActivity {
 
     MediaPlayer mediaPlayer;
+
+    private CountDownTimer countDownTimer;
 
     private TextView scoreTextView;
     private TextView livesTextView;
@@ -68,6 +71,7 @@ public class GameActivity extends AppCompatActivity {
                     Intent intent = new Intent(GameActivity.this, RegistrationActivity.class);
                     intent.putExtra("score", score);
                     startActivity(intent);
+                    finish();
                 }
             }
             // Generate a new calculation and display it
@@ -76,8 +80,32 @@ public class GameActivity extends AppCompatActivity {
 
             // Clear the answer field
             answerEditText.setText("");
+
+            countDownTimer.cancel();
+            countDownTimer.start();
             return true;
         });
+
+        countDownTimer = new CountDownTimer(30000, 1000) {
+            public void onTick(long millisUntilFinished) {
+                TextView timerTextView = findViewById(R.id.timerTextView);
+                timerTextView.setText("Time: " + millisUntilFinished / 1000);
+            }
+            public void onFinish() {
+                lives--;
+                updateLives();
+                if (lives == 0) {
+                    Intent intent = new Intent(GameActivity.this, RegistrationActivity.class);
+                    intent.putExtra("score", score);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    calculation[0] = generateCalculation();
+                    calculationTextView.setText(calculation[0]);
+                    start();
+                }
+            }
+        }.start();
     }
 
     @Override
@@ -85,6 +113,9 @@ public class GameActivity extends AppCompatActivity {
         super.onPause();
         if (mediaPlayer != null) {
             mediaPlayer.pause();
+        }
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
         }
     }
 
@@ -110,31 +141,28 @@ public class GameActivity extends AppCompatActivity {
         Random random = new Random();
         String[] operations = {"+", "-", "*"};
 
-        int numberOfNumbers = random.nextInt(4) + 1;
-        StringBuilder calculationBuilder = new StringBuilder();
+        String calculation;
+        double result;
 
-        for (int i = 0; i < numberOfNumbers; i++) {
-            int number1 = random.nextInt(51);
-            int number2 = random.nextInt(51);
-            String operation = operations[random.nextInt(operations.length)];
+        do {
+            int numberOfNumbers = random.nextInt(2) + 1;
+            StringBuilder calculationBuilder = new StringBuilder();
 
-            if ("-".equals(operation)) {
-                // Ensure the subtraction result is always positive
-                if (number2 > number1) {
-                    int temp = number1;
-                    number1 = number2;
-                    number2 = temp;
-                }
-                calculationBuilder.append(number1).append(" ").append(operation).append(" ").append(number2);
-            } else {
-                calculationBuilder.append(number1).append(" ").append(operation).append(" ");
+            for (int i = 0; i < numberOfNumbers; i++) {
+                int number = random.nextInt(51);
+                String operation = operations[random.nextInt(operations.length)];
+
+                calculationBuilder.append(number).append(" ").append(operation).append(" ");
             }
-        }
 
-        // Add the last number
-        calculationBuilder.append(random.nextInt(51));
+            // Add the last number
+            calculationBuilder.append(random.nextInt(51));
 
-        return calculationBuilder.toString();
+            calculation = calculationBuilder.toString();
+            result = calculateResult(calculation);
+        } while (result <= 0); // Continue generating a new calculation until a positive result is found
+
+        return calculation;
     }
 
     private double calculateResult(String calculation) {

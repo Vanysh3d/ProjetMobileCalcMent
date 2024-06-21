@@ -173,4 +173,11 @@ public class HomeScreen extends AppCompatActivity {
             Intent intent = new Intent(this, MusicService.class);
             stopService(intent);
         }
+
+        @Override
+        public void onBackPressed() {
+            super.onBackPressed();
+            finish();
+            System.exit(0);
+        }
     }
